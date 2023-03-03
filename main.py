@@ -6,6 +6,9 @@ pygame.init()
 size = width, height = 700, 600
 screen = pygame.display.set_mode(size)
 
+arial_font = pygame.font.match_font('arial')
+arial_font_48 = pygame.font.Font(arial_font, 30)
+
 
 class Game:
     def __init__(self, ):
@@ -24,6 +27,21 @@ class Game:
         self.platform_width, self.platform_height = 50, 10
         self.platform_rect = pygame.rect.Rect(width / 2 - self.platform_width, height - self.platform_height * 2 - 50,
                                               self.platform_width, self.platform_height)
+
+        self.width = 80
+        self.height = 25
+        self.left = 0
+        self.top = 25
+        self.cell_size = 10
+        self.objects = list()
+
+        self.board = list()
+        row = list()
+        for i in range(self.height):
+            for j in range(self.width):
+                row.append(BOARD[i][j])
+            self.board.append(row.copy())
+            row.clear()
 
     def update(self, screen):
         if not self.game_over:
@@ -60,6 +78,19 @@ class Game:
 
         pygame.draw.circle(screen, (255, 255, 255), self.ball_rect.center, self.radius)
 
+        color = None
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.board[i][j] == 0:
+                    color = pygame.color.Color('white')
+                    self.objects.append(
+                        pygame.rect.Rect((self.left + self.cell_size * j, self.top + self.cell_size * i,
+                                          self.cell_size, self.cell_size)))
+                elif self.board[i][j] == 1:
+                    color = pygame.color.Color('black')
+                pygame.draw.rect(screen, color, (
+                    self.left + self.cell_size * j, self.top + self.cell_size * i, self.cell_size, self.cell_size), 1)
+
 
 class GameOver(pygame.sprite.Sprite):
     image = pygame.image.load("data/gameover.png")
@@ -71,10 +102,15 @@ class GameOver(pygame.sprite.Sprite):
         self.rect.x = - width
         self.rect.y = (height - self.image.get_height()) // 2
         self.pos_x = - width
+        self.fight_off = 0
 
     def move(self, coordinate):
         self.pos_x += coordinate
         self.rect.x = self.pos_x
+
+    def print_res(self):
+        game_over_text_res = arial_font_48.render(f'Your earned points: {self.fight_off}', True, (255, 255, 255))
+        screen.blit(game_over_text_res, [width / 2 - game_over_text_res.get_width() / 2, height / 3 + 20])
 
 
 class Home(GameOver):
@@ -103,36 +139,6 @@ class Restart(GameOver):
         super().move(coordinate)
 
 
-class FirstLevel:
-    def __init__(self, x, y):
-        self.width = x
-        self.height = y
-        self.left = 10
-        self.top = 10
-        self.cell_size = 30
-        self.objects = list()
-
-    def set_view(self, left, top, cell_size):
-        self.left = left
-        self.top = top
-        self.cell_size = cell_size
-        self.board = BOARD
-
-    def render(self, screen):
-        color = None
-        for i in range(self.height):
-            for j in range(self.width):
-                if self.board[i][j] == 0:
-                    color = pygame.color.Color('white')
-                    self.objects.append(pygame.rect.Rect((self.left + self.cell_size * j, self.top + self.cell_size * i,
-                                                          self.cell_size, self.cell_size)))
-                elif self.board[i][j] == 1:
-                    color = pygame.color.Color('black')
-                pygame.draw.rect(screen, color, (
-                    self.left + self.cell_size * j, self.top + self.cell_size * i, self.cell_size, self.cell_size),
-                                 width)
-
-
 def main():
     pygame.display.set_caption('Game')
     pygame.mouse.set_visible(False)
@@ -145,9 +151,6 @@ def main():
 
     sprite_restart = pygame.sprite.Group()
     restart = Restart(sprite_restart)
-
-    first_level = FirstLevel(80, 25)
-    first_level.set_view(0, 25, 10)
 
     game = Game()
 
@@ -172,10 +175,11 @@ def main():
                 home.move(pps / fps)
             if restart.rect.x < (width - restart.rect.width) / 2:
                 restart.move(pps / fps)
+            gameover.print_res()
+            pygame.mouse.set_visible(True)
         else:
             screen.fill(bg_color)
             game.update(screen)
-            first_level.render(screen)
         clock.tick(fps)
         pygame.display.flip()
 
