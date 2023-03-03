@@ -1,8 +1,9 @@
 import random
 import pygame
+from board import BOARD
 
 pygame.init()
-size = width, height = 800, 600
+size = width, height = 700, 600
 screen = pygame.display.set_mode(size)
 
 
@@ -12,7 +13,7 @@ class Game:
         self.game_over = False
         self.speed = 8
 
-        self.radius = 7
+        self.radius = 5
         self.ball_rect = pygame.rect.Rect(width / 2 - self.radius, height / 2 - self.radius, self.radius * 2,
                                           self.radius * 2)
         self.ball_speed = 5
@@ -20,7 +21,7 @@ class Game:
         self.ball_speed_y = 5
         self.ball_beat_first = False
 
-        self.platform_width, self.platform_height = 80, 10
+        self.platform_width, self.platform_height = 50, 10
         self.platform_rect = pygame.rect.Rect(width / 2 - self.platform_width, height - self.platform_height * 2 - 50,
                                               self.platform_width, self.platform_height)
 
@@ -41,7 +42,7 @@ class Game:
 
                     self.ball_beat_first = True
                 self.ball_speed_y = - self.ball_speed
-                self.fight_off += 1
+                self.fight_off += 10
 
             pygame.draw.rect(screen, (255, 255, 255), self.platform_rect)
 
@@ -102,6 +103,36 @@ class Restart(GameOver):
         super().move(coordinate)
 
 
+class FirstLevel:
+    def __init__(self, x, y):
+        self.width = x
+        self.height = y
+        self.left = 10
+        self.top = 10
+        self.cell_size = 30
+        self.objects = list()
+
+    def set_view(self, left, top, cell_size):
+        self.left = left
+        self.top = top
+        self.cell_size = cell_size
+        self.board = BOARD
+
+    def render(self, screen):
+        color = None
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.board[i][j] == 0:
+                    color = pygame.color.Color('white')
+                    self.objects.append(pygame.rect.Rect((self.left + self.cell_size * j, self.top + self.cell_size * i,
+                                                          self.cell_size, self.cell_size)))
+                elif self.board[i][j] == 1:
+                    color = pygame.color.Color('black')
+                pygame.draw.rect(screen, color, (
+                    self.left + self.cell_size * j, self.top + self.cell_size * i, self.cell_size, self.cell_size),
+                                 width)
+
+
 def main():
     pygame.display.set_caption('Game')
     pygame.mouse.set_visible(False)
@@ -114,6 +145,9 @@ def main():
 
     sprite_restart = pygame.sprite.Group()
     restart = Restart(sprite_restart)
+
+    first_level = FirstLevel(80, 25)
+    first_level.set_view(0, 25, 10)
 
     game = Game()
 
@@ -141,6 +175,7 @@ def main():
         else:
             screen.fill(bg_color)
             game.update(screen)
+            first_level.render(screen)
         clock.tick(fps)
         pygame.display.flip()
 
