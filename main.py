@@ -9,6 +9,9 @@ screen = pygame.display.set_mode(size)
 arial_font = pygame.font.match_font('arial')
 arial_font_48 = pygame.font.Font(arial_font, 30)
 
+pygame.mixer.music.load('data/music.mp3')
+pygame.mixer.music.play(-1)
+
 
 class Game:
     def __init__(self, ):
