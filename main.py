@@ -9,6 +9,7 @@ screen = pygame.display.set_mode(size)
 arial_font = pygame.font.match_font('arial')
 arial_font_48 = pygame.font.Font(arial_font, 30)
 
+
 pygame.mixer.music.load('data/music.mp3')
 pygame.mixer.music.play(-1)
 
@@ -37,14 +38,16 @@ class Game:
         self.top = 25
         self.cell_size = 10
         self.objects = list()
-
-        self.board = list()
-        row = list()
+        arr = list()
         for i in range(self.height):
             for j in range(self.width):
-                row.append(BOARD[i][j])
-            self.board.append(row.copy())
-            row.clear()
+                arr.append(
+                    pygame.rect.Rect((self.left + self.cell_size * j, self.top + self.cell_size * i,
+                                      self.cell_size, self.cell_size)))
+            self.objects.append(arr.copy())
+            arr.clear()
+
+        self.board = BOARD.copy()
 
     def update(self, screen):
         if not self.game_over:
@@ -60,10 +63,8 @@ class Game:
                         self.ball_speed_x = self.ball_speed
                     else:
                         self.ball_speed_x = - self.ball_speed
-
                     self.ball_beat_first = True
                 self.ball_speed_y = - self.ball_speed
-                self.fight_off += 10
 
             pygame.draw.rect(screen, (255, 255, 255), self.platform_rect)
 
@@ -79,6 +80,24 @@ class Game:
         elif self.ball_rect.right >= width:
             self.ball_speed_x = - self.ball_speed
 
+        for i in range(self.height):
+            for j in range(self.width):
+                if self.board[i][j] == 0:
+                    if self.objects[i][j].collidepoint(
+                            (self.ball_rect.top, random.randint(self.ball_rect.left, self.ball_rect.right))) or \
+                            self.objects[i][j].collidepoint(
+                                (self.ball_rect.bottom, random.randint(self.ball_rect.left, self.ball_rect.right))):
+                        self.ball_speed_y = - self.ball_speed_y
+                        self.fight_off += 10
+                        self.board[i][j] = 1
+                    elif self.objects[i][j].collidepoint(
+                            (self.ball_rect.left, random.randint(self.ball_rect.top, self.ball_rect.bottom))) or \
+                            self.objects[i][j].collidepoint(
+                                (self.ball_rect.right, random.randint(self.ball_rect.top, self.ball_rect.bottom))):
+                        self.ball_speed_x = - self.ball_speed_x
+                        self.fight_off += 10
+                        self.board[i][j] = 1
+
         pygame.draw.circle(screen, (255, 255, 255), self.ball_rect.center, self.radius)
 
         color = None
@@ -86,13 +105,11 @@ class Game:
             for j in range(self.width):
                 if self.board[i][j] == 0:
                     color = pygame.color.Color('white')
-                    self.objects.append(
-                        pygame.rect.Rect((self.left + self.cell_size * j, self.top + self.cell_size * i,
-                                          self.cell_size, self.cell_size)))
                 elif self.board[i][j] == 1:
                     color = pygame.color.Color('black')
                 pygame.draw.rect(screen, color, (
-                    self.left + self.cell_size * j, self.top + self.cell_size * i, self.cell_size, self.cell_size), 1)
+                    self.left + self.cell_size * j, self.top + self.cell_size * i, self.cell_size,
+                    self.cell_size))
 
 
 class GameOver(pygame.sprite.Sprite):
