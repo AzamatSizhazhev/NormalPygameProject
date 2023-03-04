@@ -1,5 +1,8 @@
 import copy
 import random
+import sys
+
+
 import pygame
 from board import BOARD
 
@@ -12,9 +15,12 @@ arial_font_48 = pygame.font.Font(arial_font, 30)
 
 fight_off = 0
 
+# рекорд
+record = 0
 
-# pygame.mixer.music.load('data/music.mp3')
-# pygame.mixer.music.play(-1)
+pygame.mixer.music.load('data/music.mp3')
+pygame.mixer.music.play(-1)
+pygame.mixer.music.set_volume(0.1)
 
 
 class Game:
@@ -35,6 +41,8 @@ class Game:
         self.platform_width, self.platform_height = 70, 10
         self.platform_rect = pygame.rect.Rect(width / 2 - self.platform_width, height - self.platform_height * 2 - 50,
                                               self.platform_width, self.platform_height)
+
+        self.lose_area = pygame.rect.Rect(0, height - 5, width, 5)
 
         self.width = 80
         self.height = 25
@@ -94,6 +102,7 @@ class Game:
                         self.board[i][j] = 1
 
         pygame.draw.circle(screen, (255, 255, 255), self.ball_rect.center, self.radius)
+        pygame.draw.rect(screen, (250, 40, 40), self.lose_area)
 
         for i in range(self.height):
             for j in range(self.width):
@@ -107,6 +116,44 @@ class Game:
                 counter += 1
         if counter == len(self.board):
             self.win = True
+
+
+class Menu:
+    def __init__(self, punkts):
+        self.punkts = punkts
+
+    def render(self, cover, font, num_punkt):
+        for i in self.punkts:
+            if num_punkt == i[5]:
+                cover.blit(font.render(i[2], 1, i[4]), (i[0], i[1]))
+            else:
+                cover.blit(font.render(i[2], 1, i[3]), (i[0], i[1]))
+
+    def menu(self):
+        done = True
+        font_menu = pygame.font.Font(arial_font, 70)
+        punkt = 0
+        while done:
+            screen.fill((0, 100, 200))
+
+            self.render(screen, font_menu, punkt)
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    sys.exit()
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        if punkt > 0:
+                            punkt -= 1
+                    if event.key == pygame.K_DOWN:
+                        if punkt < len(self.punkts) - 1:
+                            punkt += 1
+                    if event.key == pygame.K_SPACE:
+                        if punkt == 0:
+                            done = False
+
+            screen.blit(screen, (0, 0))
+            pygame.display.flip()
 
 
 class GameOver(pygame.sprite.Sprite):
@@ -160,6 +207,12 @@ def main():
     pygame.display.set_caption('Game')
     pygame.mouse.set_visible(False)
 
+    # Иницаилазайия класса Punkts:
+    punkts = [(width / 2 - 70, height / 2 - 70, 'Play', (8, 7, 7), (217, 206, 206), 0),
+              (width / 2 - 110, height / 2, 'Records', (8, 7, 7), (217, 206, 206), 1)]
+    begin_frame = Menu(punkts)
+    begin_frame.menu()
+
     sprite_game_over = pygame.sprite.Group()
     gameover = GameOver(sprite_game_over)
 
@@ -184,7 +237,20 @@ def main():
             if event.type == pygame.MOUSEBUTTONDOWN and game.game_over:
                 if home.rect.x <= event.pos[0] <= home.rect.x + home.rect.width and home.rect.y <= event.pos[1] \
                         <= home.rect.y + home.rect.height:
-                    pass
+                    punkts = [(width / 2 - 70, height / 2 - 70, 'Play', (8, 7, 7), (217, 206, 206), 0),
+                              (width / 2 - 110, height / 2, 'Records', (8, 7, 7), (217, 206, 206), 1)]
+                    begin_frame = Menu(punkts)
+                    begin_frame.menu()
+                    sprite_game_over = pygame.sprite.Group()
+                    gameover = GameOver(sprite_game_over)
+                    sprite_home = pygame.sprite.Group()
+                    home = Home(sprite_home)
+
+                    sprite_restart = pygame.sprite.Group()
+                    restart = Restart(sprite_restart)
+                    game = Game()
+                    pygame.mouse.set_visible(False)
+                    fight_off = 0
                 if restart.rect.x <= event.pos[0] <= restart.rect.x + restart.rect.width and restart.rect.y <= \
                         event.pos[1] <= restart.rect.y + restart.rect.height:
                     sprite_game_over = pygame.sprite.Group()
